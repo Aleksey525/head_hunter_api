@@ -28,5 +28,8 @@ pip install -r requirements.txt
   python main.py 
   ```
 
+  ![Image alt](https://github.com/Aleksey525/head_hunter_api/raw/master/api_hh_js.jpg)
+
+
 ### Цель проекта
 Код написан в образовательных целях на онлайн-курсе для веб-разработчиков [dvmn.org](https://dvmn.org).

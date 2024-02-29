@@ -8,17 +8,17 @@ CITY_SJ_ID = 4
 VACANCIES_QUANTITY = 100
 
 
-def predict_rub_salary_hh(vacancie):
-    if vacancie['salary'] and vacancie['salary']['currency'] == 'RUR':
-        salary = predict_salary(vacancie['salary']['from'],
-                                vacancie['salary']['to'])
+def predict_rub_salary_hh(vacancy):
+    if vacancy['salary'] and vacancy['salary']['currency'] == 'RUR':
+        salary = predict_salary(vacancy['salary']['from'],
+                                vacancy['salary']['to'])
         return salary
 
 
-def predict_rub_salary_sj(vacancie):
-    if vacancie['currency'] == 'rub':
-        salary = predict_salary(vacancie['payment_from'],
-                                vacancie['payment_to'])
+def predict_rub_salary_sj(vacancy):
+    if vacancy['currency'] == 'rub':
+        salary = predict_salary(vacancy['payment_from'],
+                                vacancy['payment_to'])
         return salary
 
 
@@ -73,13 +73,13 @@ def get_statistic_hh(languages):
             pages_number = page_payload['pages']
             vacancies_page = page_payload['items']
             vacancies_found = page_payload['found']
-            for vacancie in vacancies_page:
-                language_vacancies.append(vacancie)
+            for vacancy in vacancies_page:
+                language_vacancies.append(vacancy)
             page += 1
         vacancies_processed = 0
         total_salary = 0
-        for language_vacancie in language_vacancies:
-            predict_rub_salary = predict_rub_salary_hh(language_vacancie)
+        for language_vacancy in language_vacancies:
+            predict_rub_salary = predict_rub_salary_hh(language_vacancy)
             if not predict_rub_salary:
                 continue
             vacancies_processed += 1
@@ -116,15 +116,15 @@ def get_statistic_sj(languages, secret_key):
             page_payload = response.json()
             vacancies_page = page_payload['objects']
             vacancies_found = page_payload['total']
-            for vacancie in vacancies_page:
-                language_vacancies.append(vacancie)
+            for vacancy in vacancies_page:
+                language_vacancies.append(vacancy)
             page += 1
             if not len(vacancies_page):
                 break
         vacancies_processed = 0
         total_salary = 0
-        for language_vacancie in language_vacancies:
-            predict_rub_salary = predict_rub_salary_sj(language_vacancie)
+        for language_vacancy in language_vacancies:
+            predict_rub_salary = predict_rub_salary_sj(language_vacancy)
             if not predict_rub_salary:
                 continue
             vacancies_processed += 1

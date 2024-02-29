@@ -3,8 +3,12 @@ from environs import Env
 from terminaltables import AsciiTable
 
 
+CITY_HH_ID = '1'
+CITY_SJ_ID = 4
+
+
 def predict_rub_salary_hh(vacancie):
-    if vacancie['salary'] is not None and vacancie['salary']['currency'] == 'RUR':
+    if vacancie['salary'] and vacancie['salary']['currency'] == 'RUR':
         salary = predict_salary(vacancie['salary']['from'], vacancie['salary']['to'])
         return salary
 
@@ -19,21 +23,20 @@ def predict_salary(salary_from, salary_to):
     if salary_from and salary_to:
         salary = (salary_from + salary_to) / 2
         return salary
-    else:
-        if (salary_from == 0 or salary_from is None) and (salary_to is not (None or 0)):
-            salary = salary_to * 0.8
-            return salary
-        if (salary_to == 0 or salary_to is None) and (salary_from is not (None or 0)):
-            salary = salary_from * 1.2
-            return salary
+    if not salary_from and salary_to:
+        salary = salary_to * 0.8
+        return salary
+    if not salary_to and salary_from:
+        salary = salary_from * 1.2
+        return salary
 
 
-def create_table(dictionary, title):
-    table_data = [['Язык программирования', 'Вакансий найдено', 'Вакансий обработано', 'Средняя зарплата']]
-    for language, stat in dictionary.items():
-        table_data.append([language.lower(), stat['vacancies_found'],
-                           stat['vacancies_processed'], stat['average_salary']])
-    table = AsciiTable(table_data, title=title)
+def create_table(resourse_statistic, resourse_title):
+    table_rows = [['Язык программирования', 'Вакансий найдено', 'Вакансий обработано', 'Средняя зарплата']]
+    for language, statistic in resourse_statistic.items():
+        table_rows.append([language.lower(), statistic['vacancies_found'],
+                           statistic['vacancies_processed'], statistic['average_salary']])
+    table = AsciiTable(table_rows, title=resourse_title)
     return table.table
 
 
@@ -44,38 +47,37 @@ def get_statistic_hh(languages):
         language_vacancies = []
         pages_number = 1
         page = 0
-        params = {
-            'text': f'Программист {language}',
-            'area': '1'
-        }
         headers = {'User-Agent': 'api-test-agent'}
-        response = requests.get(url_api_hh, params=params, headers=headers)
-        vacancies_found = response.json()['found']
-        while page < pages_number:
+        while page < pages_number / len(languages):
             params = {'page': page,
                       'text': f'Программист {language}',
-                      'area': '1'
+                      'area': CITY_HH_ID,
                       }
             page_response = requests.get(url_api_hh, params=params, headers=headers)
             page_response.raise_for_status()
             page_payload = page_response.json()
             pages_number = page_payload['pages']
-            page_vacancies = page_payload['items']
-            for vacancie in page_vacancies:
+            vacancies_page = page_payload['items']
+            vacancies_found = page_payload['found']
+            for vacancie in vacancies_page:
                 language_vacancies.append(vacancie)
-            if page == 14:
-                break
             page += 1
         vacancies_processed = 0
-        salary = 0
-        for language_vacanscie in language_vacancies:
-            if predict_rub_salary_hh(language_vacanscie) is None:
+        total_salary = 0
+        for language_vacancie in language_vacancies:
+            predict_rub_salary = predict_rub_salary_hh(language_vacancie)
+            if not predict_rub_salary:
                 continue
             vacancies_processed += 1
-            salary = salary + predict_rub_salary_hh(language_vacanscie)
-        average_salary = int(salary / vacancies_processed)
-        statistics = dict(average_salary=average_salary, vacancies_processed=vacancies_processed,
-                           vacancies_found=vacancies_found)
+            total_salary = total_salary + predict_rub_salary
+        if not vacancies_processed:
+            average_salary = 0
+        else:
+            average_salary = int(total_salary / vacancies_processed)
+        statistics = {
+            'average_salary': average_salary,
+            'vacancies_processed': vacancies_processed,
+            'vacancies_found': vacancies_found}
         hh_statistics[language] = hh_statistics.get(language, statistics)
     return hh_statistics
 
@@ -83,42 +85,41 @@ def get_statistic_hh(languages):
 def get_statistic_sj(languages, secret_key):
     url_api = 'https://api.superjob.ru/2.0/vacancies/?'
     sj_statistics = {}
-    headers = {'X-Api-App-Id': secret_key}
     for language in languages:
-        params = {'catalogues': 'Разработка, программирование',
-                  'keyword': f'{language}',
-                  'town': 4,
-                  }
+        headers = {'X-Api-App-Id': secret_key}
         page = 0
         language_vacancies = []
-        response = requests.get(url_api, params=params, headers=headers)
-        vacancies_found = response.json()['total']
         while True:
             params = {'catalogues': 'Разработка, программирование',
-                      'keyword': f'{language}',
-                      'town': 4,
+                      'keyword': f'Программист {language}',
+                      'town': CITY_SJ_ID,
                       'page': page}
             response = requests.get(url_api, headers=headers, params=params)
             response.raise_for_status()
-            page_vacancies = response.json()['objects']
-            for vacancie in page_vacancies:
+            page_payload = response.json()
+            vacancies_page = page_payload['objects']
+            vacancies_found = page_payload['total']
+            for vacancie in vacancies_page:
                 language_vacancies.append(vacancie)
             page += 1
-            if len(page_vacancies) == 0:
+            if not len(vacancies_page):
                 break
         vacancies_processed = 0
-        salary = 0
-        for language_vacanscie in language_vacancies:
-            if predict_rub_salary_sj(language_vacanscie) is None:
+        total_salary = 0
+        for language_vacancie in language_vacancies:
+            predict_rub_salary = predict_rub_salary_sj(language_vacancie)
+            if not predict_rub_salary:
                 continue
             vacancies_processed += 1
-            salary = salary + predict_rub_salary_sj(language_vacanscie)
-        if vacancies_processed == 0:
+            total_salary = total_salary + predict_rub_salary
+        if not vacancies_processed:
             average_salary = 0
         else:
-            average_salary = int(salary / vacancies_processed)
-        statistics = dict(vacancies_found=vacancies_found, vacancies_processed=vacancies_processed,
-                           average_salary=average_salary)
+            average_salary = int(total_salary / vacancies_processed)
+        statistics = {
+            'average_salary': average_salary,
+            'vacancies_processed': vacancies_processed,
+            'vacancies_found': vacancies_found}
         sj_statistics[language] = sj_statistics.get(language, statistics)
     return sj_statistics
 
@@ -139,5 +140,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

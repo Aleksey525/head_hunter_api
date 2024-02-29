@@ -79,11 +79,11 @@ def get_statistic_hh(languages):
         vacancies_processed = 0
         total_salary = 0
         for language_vacancy in language_vacancies:
-            predict_rub_salary = predict_rub_salary_hh(language_vacancy)
-            if not predict_rub_salary:
+            rub_salary = predict_rub_salary_hh(language_vacancy)
+            if not rub_salary:
                 continue
             vacancies_processed += 1
-            total_salary = total_salary + predict_rub_salary
+            total_salary = total_salary + rub_salary
         if not vacancies_processed:
             average_salary = 0
         else:
@@ -124,11 +124,11 @@ def get_statistic_sj(languages, secret_key):
         vacancies_processed = 0
         total_salary = 0
         for language_vacancy in language_vacancies:
-            predict_rub_salary = predict_rub_salary_sj(language_vacancy)
-            if not predict_rub_salary:
+            rub_salary = predict_rub_salary_sj(language_vacancy)
+            if not rub_salary:
                 continue
             vacancies_processed += 1
-            total_salary = total_salary + predict_rub_salary
+            total_salary = total_salary + rub_salary
         if not vacancies_processed:
             average_salary = 0
         else:

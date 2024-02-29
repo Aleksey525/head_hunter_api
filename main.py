@@ -10,15 +10,19 @@ VACANCIES_QUANTITY = 100
 
 def predict_rub_salary_hh(vacancy):
     if vacancy['salary'] and vacancy['salary']['currency'] == 'RUR':
-        salary = predict_salary(vacancy['salary']['from'],
-                                vacancy['salary']['to'])
+        salary = predict_salary(
+            vacancy['salary']['from'],
+            vacancy['salary']['to']
+        )
         return salary
 
 
 def predict_rub_salary_sj(vacancy):
     if vacancy['currency'] == 'rub':
-        salary = predict_salary(vacancy['payment_from'],
-                                vacancy['payment_to'])
+        salary = predict_salary(
+            vacancy['payment_from'],
+            vacancy['payment_to']
+        )
         return salary
 
 
@@ -35,8 +39,12 @@ def predict_salary(salary_from, salary_to):
 
 
 def create_table(resourse_statistic, resourse_title):
-    table_rows = [['Язык программирования', 'Вакансий найдено',
-                   'Вакансий обработано', 'Средняя зарплата']]
+    table_rows = [
+        ['Язык программирования',
+         'Вакансий найдено',
+         'Вакансий обработано',
+         'Средняя зарплата']
+    ]
     for language, statistic in resourse_statistic.items():
         table_rows.append([
             language.lower(),

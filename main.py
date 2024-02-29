@@ -5,6 +5,7 @@ from terminaltables import AsciiTable
 
 CITY_HH_ID = '1'
 CITY_SJ_ID = 4
+VACANCIES_QUANTITY = 100
 
 
 def predict_rub_salary_hh(vacancie):
@@ -48,10 +49,11 @@ def get_statistic_hh(languages):
         pages_number = 1
         page = 0
         headers = {'User-Agent': 'api-test-agent'}
-        while page < pages_number / len(languages):
+        while page < pages_number:
             params = {'page': page,
                       'text': f'Программист {language}',
                       'area': CITY_HH_ID,
+                      'per_page': VACANCIES_QUANTITY
                       }
             page_response = requests.get(url_api_hh, params=params, headers=headers)
             page_response.raise_for_status()

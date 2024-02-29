@@ -10,13 +10,15 @@ VACANCIES_QUANTITY = 100
 
 def predict_rub_salary_hh(vacancie):
     if vacancie['salary'] and vacancie['salary']['currency'] == 'RUR':
-        salary = predict_salary(vacancie['salary']['from'], vacancie['salary']['to'])
+        salary = predict_salary(vacancie['salary']['from'],
+                                vacancie['salary']['to'])
         return salary
 
 
 def predict_rub_salary_sj(vacancie):
     if vacancie['currency'] == 'rub':
-        salary = predict_salary(vacancie['payment_from'], vacancie['payment_to'])
+        salary = predict_salary(vacancie['payment_from'],
+                                vacancie['payment_to'])
         return salary
 
 
@@ -33,10 +35,15 @@ def predict_salary(salary_from, salary_to):
 
 
 def create_table(resourse_statistic, resourse_title):
-    table_rows = [['Язык программирования', 'Вакансий найдено', 'Вакансий обработано', 'Средняя зарплата']]
+    table_rows = [['Язык программирования', 'Вакансий найдено',
+                   'Вакансий обработано', 'Средняя зарплата']]
     for language, statistic in resourse_statistic.items():
-        table_rows.append([language.lower(), statistic['vacancies_found'],
-                           statistic['vacancies_processed'], statistic['average_salary']])
+        table_rows.append([
+            language.lower(),
+            statistic['vacancies_found'],
+            statistic['vacancies_processed'],
+            statistic['average_salary']
+        ])
     table = AsciiTable(table_rows, title=resourse_title)
     return table.table
 
@@ -50,12 +57,17 @@ def get_statistic_hh(languages):
         page = 0
         headers = {'User-Agent': 'api-test-agent'}
         while page < pages_number:
-            params = {'page': page,
-                      'text': f'Программист {language}',
-                      'area': CITY_HH_ID,
-                      'per_page': VACANCIES_QUANTITY
-                      }
-            page_response = requests.get(url_api_hh, params=params, headers=headers)
+            params = {
+                'page': page,
+                'text': f'Программист {language}',
+                'area': CITY_HH_ID,
+                'per_page': VACANCIES_QUANTITY
+            }
+            page_response = requests.get(
+                url_api_hh,
+                params=params,
+                headers=headers
+            )
             page_response.raise_for_status()
             page_payload = page_response.json()
             pages_number = page_payload['pages']
@@ -79,7 +91,8 @@ def get_statistic_hh(languages):
         statistics = {
             'average_salary': average_salary,
             'vacancies_processed': vacancies_processed,
-            'vacancies_found': vacancies_found}
+            'vacancies_found': vacancies_found
+        }
         hh_statistics[language] = hh_statistics.get(language, statistics)
     return hh_statistics
 
@@ -92,10 +105,12 @@ def get_statistic_sj(languages, secret_key):
         page = 0
         language_vacancies = []
         while True:
-            params = {'catalogues': 'Разработка, программирование',
-                      'keyword': f'Программист {language}',
-                      'town': CITY_SJ_ID,
-                      'page': page}
+            params = {
+                'catalogues': 'Разработка, программирование',
+                'keyword': f'Программист {language}',
+                'town': CITY_SJ_ID,
+                'page': page
+            }
             response = requests.get(url_api, headers=headers, params=params)
             response.raise_for_status()
             page_payload = response.json()
@@ -121,7 +136,8 @@ def get_statistic_sj(languages, secret_key):
         statistics = {
             'average_salary': average_salary,
             'vacancies_processed': vacancies_processed,
-            'vacancies_found': vacancies_found}
+            'vacancies_found': vacancies_found
+        }
         sj_statistics[language] = sj_statistics.get(language, statistics)
     return sj_statistics
 
@@ -135,9 +151,12 @@ def main():
     title_table_sj = 'SuperJob Moscow'
     try:
         print(create_table(get_statistic_hh(languages), title_table_hh))
-        print(create_table(get_statistic_sj(languages, secret_key), title_table_sj))
+        print(create_table(
+            get_statistic_sj(languages, secret_key),
+            title_table_sj)
+        )
     except requests.exceptions.HTTPError:
-        print(f'Ошибка HTTP, приложение завершило работу')
+        print('Ошибка HTTP, приложение завершило работу')
 
 
 if __name__ == '__main__':
